@@ -1,8 +1,11 @@
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 import os
 
-llm = ChatOpenAI(api_key=os.environ.get("OPENAI_API_KEY"),model="gpt-4o-mini")
+llm = ChatGoogleGenerativeAI(
+    api_key=os.environ.get("GOOGLE_API_KEY"),
+    model="gemini-2.0-flash",
+)
 
 # プロンプトテンプレート
 template = "あなたは優秀なPythonの専門家です。次の質問に答えてください。{question}"

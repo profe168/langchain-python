@@ -1,9 +1,12 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
-import config
+from dotenv import load_dotenv
 
+# APIキーを環境変数から取得
+load_dotenv(dotenv_path="../.env")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 main_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(main_path)
@@ -18,7 +21,10 @@ whole_document = "".join([page.page_content for page in documents])
 # print(documents)
 # print(whole_document)
 
-llm = ChatOpenAI(api_key=config.OPENAI_API_KEY,model_name="gpt-4o-mini")
+llm = ChatGoogleGenerativeAI(
+    api_key=GOOGLE_API_KEY,
+    model="gemini-pro",
+)
 
 # プロンプトテンプレート
 template = """

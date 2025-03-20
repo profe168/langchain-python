@@ -1,10 +1,19 @@
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.utils.math import cosine_similarity
-import config
+import os
+from dotenv import load_dotenv
 
+# プロジェクトルートの.envファイルを読み込む
+load_dotenv(dotenv_path="../.env")
 
-# OpenAIの埋め込みモデルを設定
-embeddings_model = OpenAIEmbeddings(api_key=config.OPENAI_API_KEY,model="text-embedding-3-small")
+# APIキーを環境変数から取得
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+
+# Googleの埋め込みモデルを設定
+embeddings_model = GoogleGenerativeAIEmbeddings(
+    api_key=GOOGLE_API_KEY,
+    model="models/embedding-001"
+)
 
 # テキストの埋め込みベクトルを取得
 embedding1 = embeddings_model.embed_query("AIはどのように機能しますか？")

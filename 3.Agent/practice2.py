@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -41,7 +41,7 @@ builder.add_edge("step_3", END)
 
 initial_state ={"input":"初期input","step_data":""}
 
-# Add
+# コンパイル
 graph = builder.compile()
 graph.invoke(initial_state)
 

@@ -2,7 +2,7 @@ from typing import Annotated, Literal, TypedDict
 
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
-from langgraph.graph import END, START, StateGraph, MessagesState
+from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage
@@ -11,16 +11,25 @@ import matplotlib.pyplot as plt
 import io
 import config
 from serpapi import GoogleSearch
+import os
+
+# APIキーの環境変数設定
+os.environ["OPENAI_API_KEY"] = config.OPENAI_API_KEY
+os.environ["SERPAPI_API_KEY"] = config.SERP_API_KEY
+
+# MessagesStateの定義（元々はインポートされていたが、独自に定義）
+class MessagesState(TypedDict):
+    messages: list
 
 
-# Define the tools for the agent to use
+# エージェントが使用するツールを定義
 @tool
 def search(query: str):
-    """Search the web using SerpAPI."""
+    """SerpAPIを使用してウェブを検索します。"""
     params = {
         "q": query,
-        "hl": "en",
-        "gl": "us",
+        "hl": "ja",
+        "gl": "jp",
         "api_key": config.SERP_API_KEY
     }
     
@@ -31,7 +40,7 @@ def search(query: str):
     search_results = [
         f"{res['title']}: {res['snippet']} - {res['link']}" for res in results_list[:3]
     ]
-    return search_results if search_results else ["No results found."]
+    return search_results if search_results else ["検索結果が見つかりませんでした。"]
 
 
 tools = [search]
@@ -40,58 +49,58 @@ tool_node = ToolNode(tools)
 
 model = ChatOpenAI(api_key=config.OPENAI_API_KEY,model_name="gpt-4o-mini").bind_tools(tools)
 
-# Define the function that determines whether to continue or not
+# 続行するかどうかを決定する関数を定義
 def should_continue(state: MessagesState) -> Literal["tools", END]:
     messages = state['messages']
     last_message = messages[-1]
-    # If the LLM makes a tool call, then we route to the "tools" node
+    # LLMがツールを呼び出す場合、"tools"ノードに進む
     if last_message.tool_calls:
         return "tools"
-    # Otherwise, we stop (reply to the user)
+    # それ以外の場合は停止（ユーザーに返信）
     return END
 
 
-# Define the function that calls the model
+# モデルを呼び出す関数を定義
 def call_model(state: MessagesState):
     messages = state['messages']
     response = model.invoke(messages)
-    # We return a list, because this will get added to the existing list
+    # リストを返します（既存のリストに追加されるため）
     return {"messages": [response]}
 
 
-# Define a new graph
+# 新しいグラフを定義
 workflow = StateGraph(MessagesState)
 
-# Define the two nodes we will cycle between
+# 循環する2つのノードを定義
 workflow.add_node("agent", call_model)
 workflow.add_node("tools", tool_node)
 
-# Set the entrypoint as `agent`
-# This means that this node is the first one called
+# エントリーポイントを`agent`に設定
+# これはこのノードが最初に呼び出されることを意味します
 workflow.add_edge(START, "agent")
 
-# We now add a conditional edge
+# 条件付きエッジを追加
 workflow.add_conditional_edges(
-    # First, we define the start node. We use `agent`.
-    # This means these are the edges taken after the `agent` node is called.
+    # 最初に開始ノードを定義します。`agent`を使用します。
+    # これは`agent`ノードが呼び出された後に進むエッジを意味します。
     "agent",
-    # Next, we pass in the function that will determine which node is called next.
+    # 次に、次に呼び出されるノードを決定する関数を渡します。
     should_continue,
 )
 
-# We now add a normal edge from `tools` to `agent`.
-# This means that after `tools` is called, `agent` node is called next.
+# `tools`から`agent`への通常のエッジを追加
+# これは`tools`が呼び出された後、次に`agent`ノードが呼び出されることを意味します
 workflow.add_edge("tools", 'agent')
 
 checkpointer  = MemorySaver()
 
-# Finally, we compile it!
-# This compiles it into a LangChain Runnable,
-# meaning you can use it as you would any other runnable.
-# Note that we're (optionally) passing the memory when compiling the graph
+# 最後にコンパイル！
+# これはLangChain Runnableにコンパイルされ、
+# 他のRunnableと同様に使用できます。
+# （オプションで）グラフをコンパイルするときにメモリを渡していることに注意してください
 app = workflow.compile(checkpointer=checkpointer )
 
 thread = {"configurable":{"thread_id":"42"}}
-inputs = [HumanMessage(content="what is the weather in sf")]
+inputs = [HumanMessage(content="サンフランシスコの天気はどうですか")]
 for event in app.stream({"messages":inputs},thread,stream_mode="values"):
     event["messages"][-1].pretty_print()

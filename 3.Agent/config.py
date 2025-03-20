@@ -1,2 +1,2 @@
-OPENAI_API_KEY = "ご自身のAPIキー"
-SERP_API_KEY = "ご自身のAPIキー"
+OPENAI_API_KEY = "あなたのOpenAI APIキーをここに入力してください"
+SERP_API_KEY = "あなたのSerpAPI APIキーをここに入力してください"

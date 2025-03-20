@@ -1,13 +1,22 @@
-from typing import Literal
+from typing import Literal, TypedDict
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
-from langgraph.graph import END, START, StateGraph, MessagesState
+from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage
 from serpapi import GoogleSearch  
+import os
 
 import config
+
+# APIキーの環境変数設定
+os.environ["OPENAI_API_KEY"] = config.OPENAI_API_KEY
+os.environ["SERPAPI_API_KEY"] = config.SERP_API_KEY
+
+# MessagesStateの定義（元々はインポートされていたが、独自に定義）
+class MessagesState(TypedDict):
+    messages: list
 
 # エージェントが使用するツールを定義
 @tool

@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 from PIL import Image
 import matplotlib.pyplot as plt
